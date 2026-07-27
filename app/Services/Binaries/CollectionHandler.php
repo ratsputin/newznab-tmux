@@ -355,7 +355,12 @@ final class CollectionHandler
      */
     private function bulkInsertCollectionsMysql(array $rowsByCollectionKey, array $existingHashes): void
     {
-        foreach (array_chunk(array_values($rowsByCollectionKey), self::MAX_SQL_ROWS_PER_STATEMENT) as $chunk) {
+        $rows = array_values($rowsByCollectionKey);
+
+        // Sort rows deterministically by collectionhash to prevent InnoDB lock order deadlocks
+        usort($rows, static fn (array $a, array $b): int => strcmp((string) $a['collectionhash'], (string) $b['collectionhash']));
+
+        foreach (array_chunk($rows, self::MAX_SQL_ROWS_PER_STATEMENT) as $chunk) {
             $placeholders = [];
             $bindings = [];
             foreach ($chunk as $row) {
@@ -374,21 +379,30 @@ final class CollectionHandler
                 );
             }
 
-            // ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id) is the standard
-            // "insert or do nothing" idiom that avoids re-writing existing
-            // rows (and the redo/binlog churn that comes with it) while still
-            // letting LAST_INSERT_ID() return the existing row's id.
-            DB::statement(
-                'INSERT INTO collections (subject, fromname, date, xref, groups_id, totalfiles, collectionhash, collection_regexes_id, dateadded, noise) VALUES '
+            $sql = 'INSERT INTO collections (subject, fromname, date, xref, groups_id, totalfiles, collectionhash, collection_regexes_id, dateadded, noise) VALUES '
                 .implode(',', $placeholders)
-                .' ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)',
-                $bindings
-            );
+                .' ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)';
+
+            $attempts = 0;
+            while (true) {
+                try {
+                    DB::statement($sql, $bindings);
+                    break;
+                } catch (\Illuminate\Database\QueryException $e) {
+                    $errorCode = $e->errorInfo[1] ?? 0;
+                    // Retry on Deadlock (1213), Record Changed (1020), or Lock Wait Timeout (1205)
+                    if (in_array($errorCode, [1213, 1020, 1205], true) && $attempts < 3) {
+                        $attempts++;
+                        usleep(random_int(20000, 100000) * $attempts);
+                        continue;
+                    }
+                    throw $e;
+                }
+            }
         }
 
         $this->batchAppendXrefs($rowsByCollectionKey, $existingHashes);
     }
-
     /**
      * Append xref tokens for every existing collection in a chunk in a single
      * UPDATE...JOIN per sub-chunk instead of N standalone UPDATEs (one per row).

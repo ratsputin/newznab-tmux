@@ -1376,6 +1376,9 @@ class ElasticSearchDriver implements SearchDriverInterface
 
             $searchNameDotless = $this->createPlainSearchName($release['searchname'] ?? '');
 
+            $postdateTs = !empty($release['postdate']) ? strtotime((string) $release['postdate']) : 0;
+            $adddateTs = !empty($release['adddate']) ? strtotime((string) $release['adddate']) : 0;
+
             $params['body'][] = [
                 'index' => [
                     '_index' => $this->getReleasesIndex(),
@@ -1384,13 +1387,27 @@ class ElasticSearchDriver implements SearchDriverInterface
             ];
 
             $params['body'][] = [
-                'id' => $release['id'],
+                'id' => (int) $release['id'],
                 'name' => (string) ($release['name'] ?? ''),
                 'searchname' => (string) ($release['searchname'] ?? ''),
                 'plainsearchname' => $searchNameDotless,
                 'fromname' => (string) ($release['fromname'] ?? ''),
                 'categories_id' => (int) ($release['categories_id'] ?? 0),
                 'filename' => (string) ($release['filename'] ?? ''),
+                'postdate' => $release['postdate'] ?? null,
+                'adddate' => $release['adddate'] ?? null,
+                'postdate_ts' => $postdateTs !== false ? $postdateTs : 0,
+                'adddate_ts' => $adddateTs !== false ? $adddateTs : 0,
+                'size' => (int) ($release['size'] ?? 0),
+                'passwordstatus' => (int) ($release['passwordstatus'] ?? 0),
+                'groups_id' => (int) ($release['groups_id'] ?? 0),
+                'nzbstatus' => (int) ($release['nzbstatus'] ?? 0),
+                'haspreview' => (int) ($release['haspreview'] ?? 0),
+                'totalpart' => (int) ($release['totalpart'] ?? 0),
+                'grabs' => (int) ($release['grabs'] ?? 0),
+                'imdbid' => (string) ($release['imdbid'] ?? ''),
+                'videos_id' => (int) ($release['videos_id'] ?? 0),
+                'movieinfo_id' => (int) ($release['movieinfo_id'] ?? 0),
             ];
 
             $success++;
@@ -1402,20 +1419,10 @@ class ElasticSearchDriver implements SearchDriverInterface
                 $response = $client->bulk($params);
 
                 if (isset($response['errors']) && $response['errors']) {
-                    foreach ($response['items'] as $item) {
-                        if (isset($item['index']['error'])) {
-                            $errors++;
-                            $success--;
-                            if (config('app.debug')) {
-                                Log::error('ElasticSearch bulkInsertReleases error: '.json_encode($item['index']['error']));
-                            }
-                        }
-                    }
+                    Log::error('ElasticSearch bulkInsertReleases had errors');
                 }
             } catch (\Throwable $e) {
                 Log::error('ElasticSearch bulkInsertReleases error: '.$e->getMessage());
-                $errors += $success;
-                $success = 0;
             }
         }
 
@@ -1748,24 +1755,42 @@ class ElasticSearchDriver implements SearchDriverInterface
     {
         $searchNameDotless = $this->createPlainSearchName($parameters['searchname'] ?? '');
 
+        $postdateTs = !empty($parameters['postdate']) ? strtotime((string) $parameters['postdate']) : 0;
+        $adddateTs = !empty($parameters['adddate']) ? strtotime((string) $parameters['adddate']) : 0;
+
         return [
             'body' => [
-                'id' => $parameters['id'],
-                'name' => $parameters['name'] ?? '',
-                'searchname' => $parameters['searchname'] ?? '',
+                'id' => (int) ($parameters['id'] ?? 0),
+                'name' => (string) ($parameters['name'] ?? ''),
+                'searchname' => (string) ($parameters['searchname'] ?? ''),
                 'plainsearchname' => $searchNameDotless,
-                'fromname' => $parameters['fromname'] ?? '',
-                'categories_id' => $parameters['categories_id'] ?? 0,
+                'fromname' => (string) ($parameters['fromname'] ?? ''),
+                'categories_id' => (int) ($parameters['categories_id'] ?? 0),
                 'imdbid' => (string) ($parameters['imdbid'] ?? ''),
-                'filename' => $parameters['filename'] ?? '',
-                'add_date' => now()->format('Y-m-d H:i:s'),
+                'filename' => (string) ($parameters['filename'] ?? ''),
+                'add_date' => $parameters['adddate'] ?? now()->format('Y-m-d H:i:s'),
                 'post_date' => $parameters['postdate'] ?? now()->format('Y-m-d H:i:s'),
+                'postdate_ts' => $postdateTs !== false ? $postdateTs : 0,
+                'adddate_ts' => $adddateTs !== false ? $adddateTs : 0,
+                'size' => (int) ($parameters['size'] ?? 0),
+                'passwordstatus' => (int) ($parameters['passwordstatus'] ?? 0),
+                'groups_id' => (int) ($parameters['groups_id'] ?? 0),
+                'nzbstatus' => (int) ($parameters['nzbstatus'] ?? 0),
+                'haspreview' => (int) ($parameters['haspreview'] ?? 0),
+                'totalpart' => (int) ($parameters['totalpart'] ?? 0),
+                'grabs' => (int) ($parameters['grabs'] ?? 0),
+                'tmdbid' => (int) ($parameters['tmdbid'] ?? 0),
+                'traktid' => (int) ($parameters['traktid'] ?? 0),
+                'tvdb' => (int) ($parameters['tvdb'] ?? 0),
+                'tvmaze' => (int) ($parameters['tvmaze'] ?? 0),
+                'tvrage' => (int) ($parameters['tvrage'] ?? 0),
+                'videos_id' => (int) ($parameters['videos_id'] ?? 0),
+                'movieinfo_id' => (int) ($parameters['movieinfo_id'] ?? 0),
             ],
             'index' => $this->getReleasesIndex(),
             'id' => $parameters['id'],
         ];
     }
-
     /**
      * Create a plain search name by removing dots and dashes.
      *

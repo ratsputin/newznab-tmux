@@ -272,6 +272,12 @@ final class BinaryHandler
     /** @param  list<array<string, mixed>>  $rows */
     private function bulkInsertBinariesMysql(array $rows): void
     {
+        // Sort rows by collections_id + hash to ensure consistent InnoDB locking order
+        usort($rows, static function (array $a, array $b): int {
+            $cmp = ($a['collections_id'] ?? 0) <=> ($b['collections_id'] ?? 0);
+            return $cmp !== 0 ? $cmp : strcmp((string) ($a['hash'] ?? ''), (string) ($b['hash'] ?? ''));
+        });
+
         foreach (array_chunk($rows, self::MAX_SQL_ROWS_PER_STATEMENT) as $chunk) {
             $placeholders = [];
             $bindings = [];
@@ -288,12 +294,25 @@ final class BinaryHandler
                 );
             }
 
-            DB::statement(
-                'INSERT INTO binaries (binaryhash, name, collections_id, totalparts, currentparts, filenumber, partsize) VALUES '
+            $sql = 'INSERT INTO binaries (binaryhash, name, collections_id, totalparts, currentparts, filenumber, partsize) VALUES '
                 .implode(',', $placeholders)
-                .' ON DUPLICATE KEY UPDATE currentparts = currentparts + 1, partsize = partsize + VALUES(partsize)',
-                $bindings
-            );
+                .' ON DUPLICATE KEY UPDATE currentparts = currentparts + 1, partsize = partsize + VALUES(partsize)';
+
+            $attempts = 0;
+            while (true) {
+                try {
+                    DB::statement($sql, $bindings);
+                    break;
+                } catch (\Illuminate\Database\QueryException $e) {
+                    $errorCode = $e->errorInfo[1] ?? 0;
+                    if (in_array($errorCode, [1213, 1020, 1205], true) && $attempts < 3) {
+                        $attempts++;
+                        usleep(random_int(20000, 100000) * $attempts);
+                        continue;
+                    }
+                    throw $e;
+                }
+            }
         }
     }
 

@@ -775,6 +775,17 @@ class NntmuxPopulateSearchIndexes extends Command
                 'releases.fromname',
                 'releases.categories_id',
                 'releases.postdate',
+                'releases.adddate',
+                'releases.size',
+                'releases.passwordstatus',
+                'releases.groups_id',
+                'releases.nzbstatus',
+                'releases.haspreview',
+                'releases.totalpart',
+                'releases.grabs',
+                'releases.imdbid',
+                'releases.videos_id',
+                'releases.movieinfo_id',
             ])
             ->selectRaw('IFNULL(GROUP_CONCAT(release_files.name SEPARATOR " "),"") AS filename')
             ->groupBy([
@@ -784,6 +795,17 @@ class NntmuxPopulateSearchIndexes extends Command
                 'releases.fromname',
                 'releases.categories_id',
                 'releases.postdate',
+                'releases.adddate',
+                'releases.size',
+                'releases.passwordstatus',
+                'releases.groups_id',
+                'releases.nzbstatus',
+                'releases.haspreview',
+                'releases.totalpart',
+                'releases.grabs',
+                'releases.imdbid',
+                'releases.videos_id',
+                'releases.movieinfo_id',
             ]);
 
         return $this->processElasticData(
@@ -802,6 +824,17 @@ class NntmuxPopulateSearchIndexes extends Command
                     'categories_id' => $item->categories_id,
                     'filename' => $item->filename ?? '',
                     'postdate' => $item->postdate,
+                    'adddate' => $item->adddate,
+                    'size' => $item->size,
+                    'passwordstatus' => $item->passwordstatus,
+                    'groups_id' => $item->groups_id,
+                    'nzbstatus' => $item->nzbstatus,
+                    'haspreview' => $item->haspreview,
+                    'totalpart' => $item->totalpart,
+                    'grabs' => $item->grabs,
+                    'imdbid' => $item->imdbid,
+                    'videos_id' => $item->videos_id,
+                    'movieinfo_id' => $item->movieinfo_id,
                 ];
             }
         );

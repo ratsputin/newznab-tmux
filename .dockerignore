@@ -2,7 +2,7 @@ vendor/
 node_modules/
 .git/
 tests/
-docker/
+#docker/
 __pycache__/
 .idea/
 .vscode/
@@ -14,7 +14,7 @@ storage/covers/
 public/build/
 
 .env
-.env.*
+#.env.*
 *.log
 phpstan*
 .phpunit*
