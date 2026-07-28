@@ -77,8 +77,7 @@ RUN composer dump-autoload --no-plugins --no-scripts --optimize \
  && npx vite build
 
 # Cleanup & Permissions
-RUN rm -rf tests/ \
- && chmod -R 755 /app/vendor/ \
+RUN chmod -R 755 /app/vendor/ \
  && chmod -R 777 /app/storage /app/resources /app/public
 
 EXPOSE ${APP_PORT:-80}
