@@ -690,4 +690,21 @@ class Release extends Model
     {
         return self::whereGuid($guid)->exists();
     }
+
+    /**
+     * Convert bytes to human-readable size string.
+     */
+    public static function bytesToSizeString(int|float|string|null $bytes, int $precision = 2): string
+    {
+        $bytes = (float) $bytes;
+        if ($bytes <= 0) {
+            return '0 B';
+        }
+
+        $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+        $i = (int) floor(log($bytes, 1024));
+        $i = min($i, count($units) - 1);
+
+        return round($bytes / (1024 ** $i), $precision) . ' ' . $units[$i];
+    }
 }
