@@ -192,10 +192,14 @@ class TmuxOutput extends Tmux
         );
 
         if (((int) $this->runVar['settings']['post'] === 1 || (int) $this->runVar['settings']['post'] === 3) && (int) $this->runVar['constants']['sequential'] !== 2) {
+            $lastRun = ! empty($this->runVar['settings']['last_run_time'])
+                ? strtotime($this->runVar['settings']['last_run_time'])
+                : $this->runVar['timers']['timer3'];
+
             $buffer .= sprintf(
                 $this->tmpMasks[1],
                 'Postprocess:',
-                'stale for '.$this->relativeTime($this->runVar['timers']['timer3'])
+                $this->relativeTime($lastRun)
             );
         }
 

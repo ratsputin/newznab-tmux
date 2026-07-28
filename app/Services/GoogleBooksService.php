@@ -111,17 +111,37 @@ class GoogleBooksService
      * @param  array<string, mixed>  $query
      * @return array<string, mixed>|null
      */
+    protected static ?int $lastRequestTimeMs = null;
+
     protected function request(array $query): ?array
     {
+        // 1. Enforce a minimum 2-second gap between Google Books HTTP calls
+        $nowMs = (int) (microtime(true) * 1000);
+        if (self::$lastRequestTimeMs !== null) {
+            $elapsed = $nowMs - self::$lastRequestTimeMs;
+            if ($elapsed < 2000) {
+                usleep((2000 - $elapsed) * 1000);
+            }
+        }
+        self::$lastRequestTimeMs = (int) (microtime(true) * 1000);
+
         try {
             if ($this->apiKey !== null) {
                 $query['key'] = $this->apiKey;
             }
 
             $response = $this->client->get(self::API_URL, ['query' => $query]);
-            if ($response->getStatusCode() !== 200) {
-                Log::warning('Google Books API request failed', ['status' => $response->getStatusCode()]);
+            $statusCode = $response->getStatusCode();
 
+            // 2. On 429 Too Many Requests, sleep 15 seconds to let the rate limit clear
+            if ($statusCode === 429) {
+                Log::warning('Google Books API rate limited (429). Cooling down for 15s...');
+                sleep(15);
+                return null;
+            }
+
+            if ($statusCode !== 200) {
+                Log::warning('Google Books API request failed', ['status' => $statusCode]);
                 return null;
             }
 

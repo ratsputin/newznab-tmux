@@ -98,5 +98,9 @@ EOF
 
 chmod 600 "$HOME/.mytop"
 
+# Start NNTmux background processing workers in tmux
+echo "Starting NNTmux background workers..."
+php artisan tmux:start || true
+
 # Run the PHP entry point with arguments
 exec docker-php-entrypoint "$@"
