@@ -259,48 +259,52 @@ abstract class BaseRunner
     protected function runParallelCommands(array $commands, int $maxProcesses, ?int $timeout = null): array
     {
         $maxProcesses = max(1, $maxProcesses);
-        $timeout = $timeout ?? (int) config('nntmux.multiprocessing_max_child_time', 1800);
-        $results = [];
         $running = [];
+        $results = [];
         $queue = $commands;
 
         $startNext = function () use (&$queue, &$running, $timeout) {
             if (empty($queue)) {
                 return;
             }
-            $key = array_key_first($queue);
-            $cmd = $queue[$key];
-            unset($queue[$key]);
+            $key = key($queue);
+            $cmd = array_shift($queue);
 
             $proc = Process::fromShellCommandline($cmd);
-            $proc->setTimeout($timeout);
+            if ($timeout !== null) {
+                $proc->setTimeout($timeout);
+            }
             $proc->start();
-            $running[$key] = $proc;
+
+            $running[$key] = [
+                'process' => $proc,
+                'output'  => '',
+            ];
         };
 
-        // Prime initial processes
         for ($i = 0; $i < $maxProcesses && ! empty($queue); $i++) {
             $startNext();
         }
 
-        // Event loop
         while (! empty($running)) {
-            foreach ($running as $key => $proc) {
+            foreach ($running as $key => $item) {
+                /** @var Process $proc */
+                $proc = $item['process'];
+
+                // Continuously append incremental output to buffer to keep the pipe empty
+                $running[$key]['output'] .= $proc->getIncrementalOutput();
+                $running[$key]['output'] .= $proc->getIncrementalErrorOutput();
+
                 if (! $proc->isRunning()) {
-                    $results[$key] = $proc->getOutput();
-                    // Output errors if any
-                    $err = $proc->getErrorOutput();
-                    if ($err !== '') {
-                        echo $err;
-                    }
+                    $results[$key] = $running[$key]['output'];
                     unset($running[$key]);
-                    // Start next from queue if available
+
                     if (! empty($queue)) {
                         $startNext();
                     }
                 }
             }
-            usleep(50000); // 50ms
+            usleep(20000); // 20ms pause
         }
 
         return $results;
@@ -317,28 +321,21 @@ abstract class BaseRunner
         $maxProcesses = max(1, (int) $maxProcesses);
         $running = [];
         $queue = $commands;
-        $total = \count($commands);
-        $started = 0;
+        $total = count($commands);
         $finished = 0;
 
         $this->headerStart('postprocess: '.$desc, $total, $maxProcesses);
 
-        $startNext = function () use (&$queue, &$running, &$started) {
+        $startNext = function () use (&$queue, &$running) {
             if (empty($queue)) {
                 return;
             }
             $cmd = array_shift($queue);
             $proc = Process::fromShellCommandline($cmd);
-            $proc->setTimeout((int) config('nntmux.multiprocessing_max_child_time', 1800));
-            $proc->start(function ($type, $buffer) {
-                // Stream both STDOUT and STDERR
-                echo $buffer;
-            });
+            $proc->start();
             $running[spl_object_id($proc)] = $proc;
-            $started++;
         };
 
-        // Prime initial processes
         for ($i = 0; $i < $maxProcesses && ! empty($queue); $i++) {
             $startNext();
         }
@@ -346,28 +343,32 @@ abstract class BaseRunner
         // Event loop
         while (! empty($running)) {
             foreach ($running as $key => $proc) {
+                // Continuously drain output outside of the isRunning() check so 64KB OS pipe buffers never fill up
+                $out = $proc->getIncrementalOutput();
+                $err = $proc->getIncrementalErrorOutput();
+
+                if ($out !== '') {
+                    echo $out;
+                }
+                if ($err !== '') {
+                    echo $err;
+                }
+
                 if (! $proc->isRunning()) {
-                    // Print any remaining buffered output
-                    $out = $proc->getIncrementalOutput();
-                    $err = $proc->getIncrementalErrorOutput();
-                    if ($out !== '') {
-                        echo $out;
-                    }
-                    if ($err !== '') {
-                        echo $err;
-                    }
                     unset($running[$key]);
                     $finished++;
+
                     if (config('nntmux.echocli')) {
                         cli()->primary('Finished task #'.($total - $finished + 1).' for '.$desc);
                     }
-                    // Start next from queue if available
+
+                    // Start next task from queue if available
                     if (! empty($queue)) {
                         $startNext();
                     }
                 }
             }
-            usleep(100000); // 100ms
+            usleep(20000); // 20ms pause to prevent high CPU usage
         }
     }
 }

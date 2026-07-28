@@ -903,7 +903,7 @@ class NNTPService extends NntpClient
      * @return NNTPService|array<string, mixed>|string Our overridden function when compression is enabled.
      *                                                 parent  Parent function when no compression.
      */
-    public function _getTextResponse(): NNTPService|array|string
+    public function _getTextResponse(): NNTPService|array|string|NntpError
     {
         if ($this->_compressionEnabled &&
             isset($this->_currentStatusResponse[1]) &&
@@ -928,7 +928,7 @@ class NNTPService extends NntpClient
      *                                               On failure : (object) DariusIII\NetNntp\Error.
      *                                               On decompress failure: (string) error message
      */
-    protected function &_getXFeatureTextResponse(): array|string|NntpError
+    protected function _getXFeatureTextResponse(): array|string|NntpError
     {
         $possibleTerm = false;
         // Use array accumulation for better performance with large data
@@ -975,8 +975,9 @@ class NNTPService extends NntpClient
                         return $deComp; // @phpstan-ignore return.type
                     }
                     $message = 'Decompression of OVER headers failed.';
+                    cli()->error($message);
 
-                    return $this->throwError(cli()->error($message), 1000);
+                    return $this->throwError($message, 1000);
                 }
                 // The buffer was not empty, so we know this was not the real ending, so reset $possibleTerm.
                 $possibleTerm = false;
@@ -994,8 +995,9 @@ class NNTPService extends NntpClient
                 // If we got nothing again, return error.
                 if (empty($buffer)) {
                     $message = 'Error fetching data from usenet server while downloading OVER headers.';
+                    cli()->error($message);
 
-                    return $this->throwError(cli()->error($message), 1000);
+                    return $this->throwError($message, 1000);
                 }
             }
 
@@ -1011,8 +1013,9 @@ class NNTPService extends NntpClient
         }
 
         $message = 'Unspecified error while downloading OVER headers.';
+        cli()->error($message);
 
-        return $this->throwError(cli()->error($message), 1000);
+        return $this->throwError($message, 1000);
     }
 
     /**

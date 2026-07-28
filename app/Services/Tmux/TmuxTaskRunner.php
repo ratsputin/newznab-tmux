@@ -112,8 +112,9 @@ class TmuxTaskRunner
     /**
      * Build sleep command
      */
-    protected function buildSleepCommand(int $seconds): string
+    protected function buildSleepCommand(int|float $seconds): string
     {
+        $seconds = (int) ceil($seconds);
         $niceness = $this->getNiceness();
         $sleepScript = base_path('app/Services/Tmux/Scripts/showsleep.php');
 

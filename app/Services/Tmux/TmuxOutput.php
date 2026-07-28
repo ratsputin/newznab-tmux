@@ -192,14 +192,19 @@ class TmuxOutput extends Tmux
         );
 
         if (((int) $this->runVar['settings']['post'] === 1 || (int) $this->runVar['settings']['post'] === 3) && (int) $this->runVar['constants']['sequential'] !== 2) {
-            $lastRun = ! empty($this->runVar['settings']['last_run_time'])
-                ? strtotime($this->runVar['settings']['last_run_time'])
-                : $this->runVar['timers']['timer3'];
+            $lastBook = \App\Models\BookInfo::max('updated_at');
+            $lastMovie = \App\Models\MovieInfo::max('updated_at');
+
+            $latestActivity = max(
+                $lastBook ? strtotime($lastBook) : 0,
+                $lastMovie ? strtotime($lastMovie) : 0,
+                $this->runVar['timers']['timer3'] ?? 0
+            );
 
             $buffer .= sprintf(
                 $this->tmpMasks[1],
                 'Postprocess:',
-                $this->relativeTime($lastRun)
+                $this->relativeTime($latestActivity)
             );
         }
 
