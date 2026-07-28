@@ -149,6 +149,13 @@ class Settings extends Model
 
     public static function settingValue(mixed $setting): mixed
     {
+        $envKey = strtoupper((string) $setting);
+        $envVal = env($envKey);
+
+        if ($envVal !== null) {
+            return self::convertValue($envVal);
+        }
+
         $value = self::query()->where('name', $setting)->value('value');
 
         // Apply the same conversion logic as the accessor

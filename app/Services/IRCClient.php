@@ -276,11 +276,14 @@ class IRCClient
             $this->_readSocket();
 
             // We got pinged, reply with a pong.
-            if (preg_match('/^PING\s*:(.+?)$/', (string) $this->_buffer, $hits)) {
+            if (preg_match('/(?:^|\s)PING\s+:?(.+)$/i', trim((string) $this->_buffer), $hits)) {
                 $this->_pong($hits[1]);
             } elseif (preg_match('/^:(.*?)\s+(\d+).*?(:.+?)?$/', (string) $this->_buffer, $hits)) {
                 // We found 001, which means we are logged in.
-                if ((int) $hits[2] === 1) {
+                if ((int) $hits[2] === 433) {
+                    $this->_nickName .= '_';
+                    $this->_writeSocket('NICK ' . $this->_nickName);
+                } elseif ((int) $hits[2] === 1) {
                     $this->_remote_host_received = $hits[1];
                     break;
 
@@ -336,10 +339,8 @@ class IRCClient
             $this->_readSocket();
 
             // If the server pings us, return it a pong.
-            if (preg_match('/^PING\s*:(.+?)$/', $this->_buffer, $hits)) {
-                if ($hits[1] === $this->_remote_host_received) {
-                    $this->_pong($hits[1]);
-                }
+            if (preg_match('/(?:^|\s)PING\s+:?(.+)$/i', trim((string) $this->_buffer), $hits)) {
+                $this->_pong(trim($hits[1]));
 
                 // Check for a channel message.
             } elseif (preg_match(
@@ -415,7 +416,7 @@ class IRCClient
      */
     protected function _pong(string $host): void
     {
-        if (! $this->_writeSocket('PONG '.$host)) {
+        if (! $this->_writeSocket('PONG :'.ltrim($host, ':'))) {
             $this->_reconnect();
         }
 

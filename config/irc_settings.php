@@ -1,5 +1,23 @@
 <?php
 
+// Dynamically convert SCRAPE_IRC_CHANNELS from .env into the serialized array format NNTmux expects
+$channelsEnv = env('SCRAPE_IRC_CHANNELS');
+if (is_string($channelsEnv) && trim($channelsEnv) !== '') {
+    $parsedChannels = [];
+    foreach (explode(',', $channelsEnv) as $channel) {
+        $channel = trim($channel);
+        if ($channel !== '') {
+            $parsedChannels[$channel] = null;
+        }
+    }
+    $channelsConfig = serialize($parsedChannels);
+} else {
+    $channelsConfig = serialize([
+        // '#Channel'                => 'Password',
+        '#PreNNTmux' => null,
+    ]);
+}
+
 return [
     /***********************************************************************************************************************
      * You can use this to set the NICKNAME=>REALNAME and USERNAME below.
@@ -35,7 +53,7 @@ return [
     /***********************************************************************************************************************
      * This is a name that is visible to others when they type /whois nickname.
      **********************************************************************************************************************/
-    'scrape_irc_realname' => env('SCRAPE_IRC_USERNAME', ''),
+    'scrape_irc_realname' => env('SCRAPE_IRC_REALNAME', env('SCRAPE_IRC_USERNAME', '')),
 
     /***********************************************************************************************************************
      * This is used as part of your "ident" when connecting to IRC.
@@ -53,8 +71,9 @@ return [
     /***********************************************************************************************************************
      * This is an optional field you can use for ignoring categories.
      * @note If you do not wish to exclude any categories=>leave it a empty string: ''
-     * @examples Case sensitive:   '/^(XXX|PDA|EBOOK|MP3)$/'
-     *           Case insensitive: '/^(X264|TV)$/i'
+     * @examples Case sensitive:    '/^(XXX|PDA|EBOOK|MP3)$/'
+     *            Case insensitive: '/^(X264|TV)$/i'
+     *
      **********************************************************************************************************************/
     'scrape_irc_category_ignore' => '',
 
@@ -62,9 +81,9 @@ return [
      * This is an optional field you can use for ignoring PRE titles.
      * @note If you do not wish to exclude any PRE titles=>leave it a empty string: ''
      * @examples Case insensitive ignore German or XXX in the title: '/\.(German|XXX)\./i'
-     *           This would ignore titles like:
-     *           Yanks.14.06.30.Bianca.Travelman.Is.A.Nudist.XXX.MP4-FUNKY
-     *           Blancanieves.Ein.Maerchen.von.Schwarz.und.Weiss.2012.German.1080p.BluRay.x264-CONTRiBUTiON
+     *            This would ignore titles like:
+     *            Yanks.14.06.30.Bianca.Travelman.Is.A.Nudist.XXX.MP4-FUNKY
+     *            Blancanieves.Ein.Maerchen.von.Schwarz.und.Weiss.2012.German.1080p.BluRay.x264-CONTRiBUTiON
      **********************************************************************************************************************/
     'scrape_irc_title_ignore' => '',
 
@@ -72,12 +91,7 @@ return [
      * This is a list of all the channels we fetch PRE's from.
      **********************************************************************************************************************/
 
-    'scrape_irc_channels' => serialize(
-        [
-            // '#Channel'                => 'Password',
-            '#PreNNTmux' => null,
-        ]
-    ),
+    'scrape_irc_channels' => $channelsConfig,
 
     /***********************************************************************************************************************
      * This is a list of all the sources we fetch PRE's from.
