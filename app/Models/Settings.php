@@ -192,7 +192,15 @@ class Settings extends Model
     public static function settingsUpdate(array $data = []): void
     {
         foreach ($data as $key => $value) {
-            self::query()->where('name', $key)->update(['value' => \is_array($value) ? implode(', ', $value) : $value]);
+            // Skip CSRF tokens or action fields passed in $request->all()
+            if (in_array($key, ['_token', 'action'], true)) {
+                continue;
+            }
+
+            self::query()->updateOrCreate(
+                ['name' => $key],
+                ['value' => is_array($value) ? implode(', ', $value) : ($value ?? '')]
+            );
         }
 
         self::forgetCachedSettings();
