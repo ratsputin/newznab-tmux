@@ -70,7 +70,7 @@
                             <input type="date"
                                    id="publishdate"
                                    name="publishdate"
-                                   value="{{ isset($book['publishdate']) && $book['publishdate'] ? date('Y-m-d', $book['publishdate']) : '' }}"
+                                   value="{{ isset($book['publishdate']) && $book['publishdate'] ? ($book['publishdate'] ? \Carbon\Carbon::parse($book['publishdate'])->format('Y-m-d') : '—') : '' }}"
                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500">
                         </div>
 
@@ -113,10 +113,10 @@
                             </label>
                             <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
                                 @if(isset($book['cover']) && $book['cover'] == 1)
-                                    <img src="{{ asset('storage/covers/book/' . $book['id'] . (file_exists(storage_path('covers/book/' . $book['id'] . '.webp')) ? '.webp' : '.jpg')) }}"
+                                    <img src="{{ getImageAssetUrl('book', (string) $book['id'], asset('assets/images/no-cover.png')) }}"
                                          alt="{{ $book['title'] }}"
                                          class="max-w-full h-auto mx-auto rounded shadow-lg img-max-h-400"
-                                         data-fallback-src="{{ asset('images/no-cover.png') }}">
+                                         data-fallback-src="{{ asset('assets/images/no-cover.png') }}">
                                 @else
                                     <div class="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
                                         <i class="fas fa-book text-6xl mb-3"></i>

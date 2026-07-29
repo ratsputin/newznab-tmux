@@ -101,7 +101,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                     @if(!empty($game['releasedate']))
-                                        {{ date('Y-m-d', $game['releasedate']) }}
+                                        {{ ($game['releasedate'] ? \Carbon\Carbon::parse($game['releasedate'])->format('Y-m-d') : '—') }}
                                     @else
                                         N/A
                                     @endif

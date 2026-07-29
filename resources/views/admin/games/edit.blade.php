@@ -155,7 +155,7 @@
                         <input type="date"
                                id="releasedate"
                                name="releasedate"
-                               value="{{ !empty($game['releasedate']) ? date('Y-m-d', $game['releasedate']) : '' }}"
+                               value="{{ !empty($game['releasedate']) ? ($game['releasedate'] ? \Carbon\Carbon::parse($game['releasedate'])->format('Y-m-d') : '—') : '' }}"
                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
                     </div>
 

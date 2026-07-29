@@ -137,10 +137,10 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                    {{ date('M j, Y', $invitation['created_at']) }} <small class="text-xs text-gray-500 dark:text-gray-400">{{ date('H:i', $invitation['created_at']) }}</small>
+                                    {{ ($invitation['created_at'] ? \Carbon\Carbon::parse($invitation['created_at'])->format('M j, Y') : '—') }} <small class="text-xs text-gray-500 dark:text-gray-400">{{ ($invitation['created_at'] ? \Carbon\Carbon::parse($invitation['created_at'])->format('H:i') : '—') }}</small>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                    {{ date('M j, Y', $invitation['expires_at']) }} <small class="text-xs text-gray-500 dark:text-gray-400">{{ date('H:i', $invitation['expires_at']) }}</small>
+                                    {{ ($invitation['expires_at'] ? \Carbon\Carbon::parse($invitation['expires_at'])->format('M j, Y') : '—') }} <small class="text-xs text-gray-500 dark:text-gray-400">{{ ($invitation['expires_at'] ? \Carbon\Carbon::parse($invitation['expires_at'])->format('H:i') : '—') }}</small>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                     @if(isset($invitation['used_by_user']))
@@ -151,7 +151,7 @@
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                     @if($invitation['used_at'])
-                                        {{ date('M j, Y', $invitation['used_at']) }} <small class="text-xs text-gray-500 dark:text-gray-400">{{ date('H:i', $invitation['used_at']) }}</small>
+                                        {{ ($invitation['used_at'] ? \Carbon\Carbon::parse($invitation['used_at'])->format('M j, Y') : '—') }} <small class="text-xs text-gray-500 dark:text-gray-400">{{ ($invitation['used_at'] ? \Carbon\Carbon::parse($invitation['used_at'])->format('H:i') : '—') }}</small>
                                     @else
                                         <span class="text-gray-400">-</span>
                                     @endif
@@ -227,13 +227,13 @@
                             @endif
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
-                            <div><span class="font-medium">Sent:</span> {{ date('M j, Y', $invitation['created_at']) }}</div>
-                            <div><span class="font-medium">Expires:</span> {{ date('M j, Y', $invitation['expires_at']) }}</div>
+                            <div><span class="font-medium">Sent:</span> {{ ($invitation['created_at'] ? \Carbon\Carbon::parse($invitation['created_at'])->format('M j, Y') : '—') }}</div>
+                            <div><span class="font-medium">Expires:</span> {{ ($invitation['expires_at'] ? \Carbon\Carbon::parse($invitation['expires_at'])->format('M j, Y') : '—') }}</div>
                             @if(isset($invitation['used_by_user']))
                                 <div><span class="font-medium">Used by:</span> {{ $invitation['used_by_user']['username'] ?? $invitation['used_by_user']['email'] }}</div>
                             @endif
                             @if($invitation['used_at'])
-                                <div><span class="font-medium">Used:</span> {{ date('M j, Y', $invitation['used_at']) }}</div>
+                                <div><span class="font-medium">Used:</span> {{ ($invitation['used_at'] ? \Carbon\Carbon::parse($invitation['used_at'])->format('M j, Y') : '—') }}</div>
                             @endif
                         </div>
                     </div>

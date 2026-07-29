@@ -66,7 +66,7 @@
                                 </div>
                                 <div class="col-span-3">
                                     @isset($preview['expires_at'])
-                                        <span class="text-gray-900 dark:text-gray-100">{{ date('M j, Y H:i', $preview['expires_at']) }}</span>
+                                        <span class="text-gray-900 dark:text-gray-100">{{ ($preview['expires_at'] ? \Carbon\Carbon::parse($preview['expires_at'])->format('M j, Y H:i') : '—') }}</span>
                                         @if($preview['expires_at'] < time())
                                             <br><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mt-1 dark:bg-red-900 dark:text-red-200">
                                                 <i class="fa fa-times mr-1"></i>Expired

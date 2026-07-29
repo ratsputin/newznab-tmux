@@ -70,7 +70,7 @@
                             <input type="date"
                                    id="releasedate"
                                    name="releasedate"
-                                   value="{{ isset($con['releasedate']) && $con['releasedate'] ? date('Y-m-d', $con['releasedate']) : '' }}"
+                                   value="{{ isset($con['releasedate']) && $con['releasedate'] ? ($con['releasedate'] ? \Carbon\Carbon::parse($con['releasedate'])->format('Y-m-d') : '—') : '' }}"
                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500">
                         </div>
 
