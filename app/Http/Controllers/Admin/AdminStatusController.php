@@ -138,7 +138,7 @@ class AdminStatusController extends BasePageController
 
     public function destroy(ServiceIncident $incident): RedirectResponse
     {
-        $serviceIds = $incident->services()->pluck('id')->all();
+        $serviceIds = $incident->services()->pluck('service_statuses.id')->all();
         $incident->delete();
 
         foreach ($serviceIds as $serviceId) {
