@@ -117,7 +117,7 @@ class Video extends Model
     /**
      * Retrieves a range of all shows for the show-edit admin list.
      */
-    public static function getRange(string $showname = ''): LengthAwarePaginator // @phpstan-ignore missingType.generics
+    public static function getRange(?string $showname = ''): LengthAwarePaginator // @phpstan-ignore missingType.generics
     {
         $sql = self::query()
             ->select(['videos.*', 'tv_info.summary', 'tv_info.publisher', 'tv_info.image'])
