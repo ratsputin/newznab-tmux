@@ -287,7 +287,21 @@ class ReleaseUpdateService
                     }
                 }
 
-                Release::query()
+                            $currentRelease = Release::find($release->releases_id);
+            if ($currentRelease !== null) {
+                $existingDuplicate = Release::query()
+                    ->where('searchname', $newTitle)
+                    ->where('size', $currentRelease->size)
+                    ->where('id', '!=', $currentRelease->id)
+                    ->first();
+
+                if ($existingDuplicate !== null) {
+                    $currentRelease->delete();
+                    return;
+                }
+            }
+
+            Release::query()
                     ->where('id', $release->releases_id)
                     ->update($updateColumns);
             } else {
